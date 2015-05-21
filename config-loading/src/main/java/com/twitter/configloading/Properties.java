@@ -30,13 +30,16 @@ public class Properties {
 		
 		Pattern overridePattern = Pattern.compile("^\\s*([^=<>\\s]+)\\s*<\\s*([^<>=\\s]+)\\s*>\\s*=\\s*([^=<>]*)\\s*$");
 		Pattern validOverridesPattern = null;
+		Pattern commentPattern = Pattern.compile("^\\s*;.*$");
 		Pattern groupPattern = Pattern.compile("^\\s*\\[\\s*([^\\s\\[\\]=]+)\\s*\\]\\s*$");
 		Pattern settingPattern = Pattern.compile("^\\s*([^=<>\\s]+)\\s*=\\s*([^=<>]*)\\s*$");
 		
+		//Initialising matchers to optimize time and space later using Matcher.reset()
 		Matcher overrideMatcher = overridePattern.matcher("key<test>=val");
 		Matcher validOverridesMatcher = null;
 		Matcher settingMatcher = settingPattern.matcher("key=val");
 		Matcher groupMatcher =  groupPattern.matcher("[init]");
+		Matcher commentMatcher = commentPattern.matcher(";comment");
 		
 		if(isOverridden){
 			for(int i=0; i<overrides.length; i++){
@@ -56,44 +59,47 @@ public class Properties {
 			String line = null;
 			String group= null;
 			while((line = reader.readLine()) != null){
-				if (line.indexOf("=") != -1) { 
-					if(group != null){
-						overrideMatcher.reset(line);
-						if(overrideMatcher.matches()){
-							if(isOverridden){
-								String setting = overrideMatcher.group(1);
-								String override = overrideMatcher.group(2);
-								String value = overrideMatcher.group(3);
-								validOverridesMatcher.reset(override);
-								if(validOverridesMatcher.matches()){
+				commentMatcher.reset(line);
+				if(!commentMatcher.matches()){ //Not a comment
+					if (line.indexOf("=") != -1) { //Setting
+						if(group != null){
+							overrideMatcher.reset(line);
+							if(overrideMatcher.matches()){ //Override setting
+								if(isOverridden){
+									String setting = overrideMatcher.group(1);
+									String override = overrideMatcher.group(2);
+									String value = overrideMatcher.group(3);
+									validOverridesMatcher.reset(override);
+									if(validOverridesMatcher.matches()){
+										prop.put(group, setting, value);
+									}
+								}
+							} else { //default setting
+								settingMatcher.reset(line);
+								if(settingMatcher.matches()){
+									String setting = settingMatcher.group(1);
+									String value = settingMatcher.group(2);
 									prop.put(group, setting, value);
+								} else {
+									System.err.println(line + " Malformed input file 1");
+									System.exit(1);
 								}
 							}
-						} else { //default setting
-							settingMatcher.reset(line);
-							if(settingMatcher.matches()){
-								String setting = settingMatcher.group(1);
-								String value = settingMatcher.group(2);
-								prop.put(group, setting, value);
-							} else {
-								System.err.println(line + " Malformed input file 1");
-								System.exit(1);
-							}
+						} else {
+							System.err.println("Malformed input file 2");
+							System.exit(1);
 						}
-					} else {
-						System.err.println("Malformed input file 2");
-						System.exit(1);
-					}
-				} else if(line.indexOf("[") != -1){ //group
-					groupMatcher.reset(line);
-					if(groupMatcher.matches()){
-						group = groupMatcher.group(1);
-						prop.put(group, null);
-					} else {
-						System.err.println("Malformed input file 3");
-						System.exit(1);
-					}
-				} 
+					} else if(line.indexOf("[") != -1){ //group
+						groupMatcher.reset(line);
+						if(groupMatcher.matches()){
+							group = groupMatcher.group(1);
+							prop.put(group, null);
+						} else {
+							System.err.println("Malformed input file 3");
+							System.exit(1);
+						}
+					} 
+				}
 			}
 		} catch (FileNotFoundException e) {
 			System.err.println("Cannot open file " + resource + ", Cause : " + e.getCause());

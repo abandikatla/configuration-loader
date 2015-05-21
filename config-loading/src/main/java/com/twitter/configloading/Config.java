@@ -48,11 +48,5 @@ public class Config {
 		return config;
 		
 	}
-	
-	public static void main(String[] args){
-		String[] o = new String[]{"test", "override"};
-		Config config = Config.load("/home/quikr/test2", o);
-		System.out.println(config.get("testgroup.setting2"));
-	}
-	
+		
 }

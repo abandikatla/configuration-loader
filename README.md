@@ -13,20 +13,33 @@ The JUnit tests help check for the multiple usecases while building
 Steps to build : mvn clean install
 
 Steps to use :
+
 Config config = Config.load("path_to_config_file", ["array", "of", "overrides]);
+
 config.get("group.setting");
 
 ---------------------------------------------------------------------------------------------------------------
 A config file will appear as follows: 
  
 [common] 
+
 basic_size_limit = 26214400 
+
 student_size_limit = 52428800 
+
 [ftp] 
+
 name = “hello there, ftp uploading” 
+
 path = /tmp/ 
+
 path<production> = /srv/var/tmp/ 
+
 path<staging> = /srv/uploads/ 
+
 path<ubuntu> = /etc/var/uploads 
+
 enabled = no 
+
 ; comment
+
